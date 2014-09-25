@@ -30,6 +30,7 @@ var cameraControl;
 
 var control, stats;
 var cameraBG, sceneBG, composer;
+var collidableMeshList = [];
 
 /**
  * Initializes the scene, camera and objects. Called when the window is
@@ -99,7 +100,7 @@ function createCubes() {
             z: 0
         }
     };
-    createCube(options);
+    collidableMeshList.push(createCube(options));
 
     options = {
         width: 10,
@@ -113,23 +114,23 @@ function createCubes() {
         }
     };
 
-    createCube(options);
+    collidableMeshList.push(createCube(options));
 
     options.position.x = 0;
     options.position.z = 15;
-    createCube(options);
+    collidableMeshList.push(createCube(options));
 
     options.position.x = 15;
     options.position.z = 15;
-    createCube(options);
+    collidableMeshList.push(createCube(options));
 
     options.position.x = -15;
     options.position.z = 0;
-    createCube(options);
+    collidableMeshList.push(createCube(options));
 
     options.position.x = 0;
     options.position.z = -15;
-    createCube(options);
+    collidableMeshList.push(createCube(options));
 }
 
 function createCube(options) {
@@ -143,6 +144,7 @@ function createCube(options) {
     cube.castShadow = true;
 
     scene.add(cube);
+    return cube;
 }
 
 function createLight() {
@@ -218,6 +220,22 @@ function addStatsObject() {
 
     document.body.appendChild(stats.domElement);
 }
+
+var projector = new THREE.Projector();
+window.onmousedown = function(event) {
+    event.preventDefault();
+
+    var victor = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1, 0.5);
+    projector.unprojectVector(victor, camera);
+
+    var raycaster = new THREE.Raycaster(camera.position, victor.sub(camera.position).normalize());
+    var intersects = raycaster.intersectObjects(collidableMeshList);
+
+    if(intersects.length > 0) {
+        intersects[0].object.material.transparent = true;
+        intersects[0].object.material.color = new THREE.Color(0x0000ff);
+    }
+};
 
 </script>
 <body>
