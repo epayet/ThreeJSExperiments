@@ -31,6 +31,7 @@ var cameraControl;
 var control, stats;
 var cameraBG, sceneBG, composer;
 var collidableMeshList = [];
+var selectedObject;
 
 /**
  * Initializes the scene, camera and objects. Called when the window is
@@ -234,8 +235,65 @@ window.onmousedown = function(event) {
     if(intersects.length > 0) {
         intersects[0].object.material.transparent = true;
         intersects[0].object.material.color = new THREE.Color(0x0000ff);
+        selectedObject = intersects[0].object;
     }
 };
+
+window.onkeydown = function(e) {
+    var Constants = {
+        Keyboard: {
+            LEFT: 81,
+            RIGHT: 68,
+            UP: 90,
+            DOWN: 83
+        }
+    };
+
+    var factor = 0.5;
+    var action = {};
+    action[Constants.Keyboard.LEFT] = function(){
+        move(new THREE.Vector3(0, 0, factor))
+    };
+    action[Constants.Keyboard.UP] = function(){
+        move(new THREE.Vector3(-factor, 0, 0))
+    };
+    action[Constants.Keyboard.DOWN] = function(){
+        move(new THREE.Vector3(factor, 0, 0))
+    };
+    action[Constants.Keyboard.RIGHT] = function(){
+       move(new THREE.Vector3(0, 0, -factor))
+    };
+
+    if(action[e.keyCode]) action[e.keyCode]();
+};
+
+function move(direction) {
+    if(!selectedObject) return;
+
+    if(!detectCollision(selectedObject, direction)) {
+        selectedObject.position.x += direction.x;
+        selectedObject.position.y += direction.y;
+        selectedObject.position.z += direction.z;
+    }
+}
+
+function detectCollision(object, directionVector) {
+    console.log(directionVector.length());
+    for(var i=0; i<object.geometry.vertices.length; i++) {
+        var localVertex = object.geometry.vertices[i].clone();
+
+        var globalVertex = localVertex.applyMatrix4(object.matrix);
+        var ray = new THREE.Raycaster(globalVertex, directionVector.clone().normalize());
+        var collisionResults = ray.intersectObjects(collidableMeshList);
+
+        if(collisionResults.length > 0)
+            console.log("Collision result: %s", collisionResults[0].distance);
+        if(collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) {
+            return true;
+        }
+    }
+    return false;
+}
 
 </script>
 <body>
